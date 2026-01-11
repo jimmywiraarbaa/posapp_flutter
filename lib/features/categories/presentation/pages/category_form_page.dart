@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/utils/id_generator.dart';
+import '../../../../core/utils/id_generator.dart';
 import '../../domain/entities/category.dart';
 import '../providers/category_providers.dart';
 

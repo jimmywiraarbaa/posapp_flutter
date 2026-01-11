@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/di/database_provider.dart';
+import '../../../../core/di/database_provider.dart';
 import '../../data/datasources/category_local_data_source.dart';
 import '../../data/repositories/category_repository_impl.dart';
 import '../../domain/entities/category.dart';

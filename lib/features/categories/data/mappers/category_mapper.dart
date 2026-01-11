@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
 
-import '../../../core/db/app_database.dart' as db;
+import '../../../../core/db/app_database.dart' as db;
 import '../../domain/entities/category.dart';
 
 Category categoryFromDb(db.Category data) {

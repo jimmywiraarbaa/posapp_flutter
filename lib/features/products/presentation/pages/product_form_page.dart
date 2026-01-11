@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../categories/domain/entities/category.dart';
 import '../../../categories/presentation/providers/category_providers.dart';
-import '../../../core/utils/id_generator.dart';
+import '../../../../core/utils/id_generator.dart';
 import '../../../units/domain/entities/unit.dart';
 import '../../../units/presentation/providers/unit_providers.dart';
 import '../../domain/entities/product.dart';
