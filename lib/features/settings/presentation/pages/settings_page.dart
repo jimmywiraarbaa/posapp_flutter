@@ -12,6 +12,8 @@ class SettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authControllerProvider);
     final autoLockLabel = _formatAutoLock(authState.autoLockMinutes);
+    final fontScale = ref.watch(fontScaleProvider);
+    final fontScaleLabel = _formatFontScale(fontScale);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Pengaturan')),
@@ -31,6 +33,12 @@ class SettingsPage extends ConsumerWidget {
             title: const Text('Auto-lock'),
             subtitle: Text(autoLockLabel),
             onTap: () => _showAutoLockPicker(context, ref),
+          ),
+          ListTile(
+            leading: const Icon(Icons.text_fields),
+            title: const Text('Ukuran Font'),
+            subtitle: Text(fontScaleLabel),
+            onTap: () => _showFontScalePicker(context, ref, fontScale),
           ),
           const Divider(height: 1),
           ListTile(
@@ -56,6 +64,29 @@ String _formatAutoLock(int minutes) {
   return '$minutes menit';
 }
 
+class _FontScaleOption {
+  const _FontScaleOption(this.value, this.label);
+
+  final double value;
+  final String label;
+}
+
+const _fontScaleOptions = <_FontScaleOption>[
+  _FontScaleOption(0.9, 'Kecil'),
+  _FontScaleOption(1.0, 'Normal'),
+  _FontScaleOption(1.1, 'Besar'),
+  _FontScaleOption(1.2, 'Ekstra besar'),
+];
+
+String _formatFontScale(double scale) {
+  for (final option in _fontScaleOptions) {
+    if ((option.value - scale).abs() < 0.01) {
+      return option.label;
+    }
+  }
+  return '${(scale * 100).round()}%';
+}
+
 Future<void> _showAutoLockPicker(BuildContext context, WidgetRef ref) async {
   const options = <int>[0, 1, 3, 5, 10, 30];
   final selected = await showModalBottomSheet<int>(
@@ -76,6 +107,35 @@ Future<void> _showAutoLockPicker(BuildContext context, WidgetRef ref) async {
     return;
   }
   await ref.read(authControllerProvider.notifier).updateAutoLockMinutes(selected);
+}
+
+Future<void> _showFontScalePicker(
+  BuildContext context,
+  WidgetRef ref,
+  double currentScale,
+) async {
+  final selected = await showModalBottomSheet<double>(
+    context: context,
+    builder: (sheetContext) => ListView(
+      children: _fontScaleOptions
+          .map(
+            (option) => ListTile(
+              title: Text(option.label),
+              subtitle: Text('${(option.value * 100).round()}%'),
+              trailing: (option.value - currentScale).abs() < 0.01
+                  ? const Icon(Icons.check)
+                  : null,
+              onTap: () => Navigator.of(sheetContext).pop(option.value),
+            ),
+          )
+          .toList(),
+    ),
+  );
+
+  if (selected == null) {
+    return;
+  }
+  await ref.read(fontScaleProvider.notifier).setFontScale(selected);
 }
 
 Future<void> _backupData(BuildContext context, WidgetRef ref) async {

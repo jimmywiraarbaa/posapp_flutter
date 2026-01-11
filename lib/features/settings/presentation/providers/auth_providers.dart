@@ -9,6 +9,7 @@ import '../../domain/repositories/pin_repository.dart';
 import '../../domain/repositories/settings_repository.dart';
 import 'auth_controller.dart';
 import 'auth_state.dart';
+import 'font_scale_controller.dart';
 
 final pinRepositoryProvider = Provider<PinRepository>((ref) {
   final db = ref.watch(appDatabaseProvider);
@@ -27,3 +28,9 @@ final authControllerProvider = StateNotifierProvider<AuthController, AuthState>(
     return AuthController(pinRepository, settingsRepository);
   },
 );
+
+final fontScaleProvider =
+    StateNotifierProvider<FontScaleController, double>((ref) {
+  final settingsRepository = ref.watch(settingsRepositoryProvider);
+  return FontScaleController(settingsRepository);
+});
