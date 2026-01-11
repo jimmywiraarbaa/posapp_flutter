@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../transactions/domain/entities/transaction_record.dart';
 import '../../../transactions/presentation/providers/transaction_providers.dart';
+import '../../../transactions/presentation/pages/transaction_detail_page.dart';
 
 class ReportsPage extends ConsumerWidget {
   const ReportsPage({super.key});
@@ -91,6 +92,13 @@ class _TransactionTile extends StatelessWidget {
       title: Text(record.trxNumber),
       subtitle: Text(subtitle),
       trailing: Text('Rp ${record.total}'),
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => TransactionDetailPage(record: record),
+          ),
+        );
+      },
     );
   }
 }

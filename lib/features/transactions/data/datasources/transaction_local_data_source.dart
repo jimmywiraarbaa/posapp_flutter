@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import '../../../../core/db/app_database.dart' as db;
 import '../../../../core/utils/id_generator.dart';
 import '../../domain/entities/sale.dart';
+import '../../domain/entities/transaction_item_record.dart';
 import '../../domain/entities/transaction_record.dart';
 
 class TransactionLocalDataSource {
@@ -101,9 +102,39 @@ class TransactionLocalDataSource {
       id: data.id,
       trxNumber: data.trxNumber,
       total: data.total,
+      paidAmount: data.paidAmount,
+      changeAmount: data.changeAmount,
       paymentMethod: data.paymentMethod,
       status: data.status,
       createdAt: DateTime.parse(data.createdAt),
     );
+  }
+
+  Future<List<TransactionItemRecord>> fetchItems(String transactionId) async {
+    final items = await (_db.select(_db.transactionItems)
+          ..where((tbl) => tbl.transactionId.equals(transactionId)))
+        .get();
+    if (items.isEmpty) {
+      return [];
+    }
+    final productIds = items.map((item) => item.productId).toSet().toList();
+    final products = await (_db.select(_db.products)
+          ..where((tbl) => tbl.id.isIn(productIds)))
+        .get();
+    final productById = {for (final product in products) product.id: product};
+
+    return items
+        .map(
+          (item) => TransactionItemRecord(
+            id: item.id,
+            productId: item.productId,
+            productName: productById[item.productId]?.name ?? '-',
+            qty: item.qty,
+            price: item.price,
+            subtotal: item.subtotal,
+            note: item.note,
+          ),
+        )
+        .toList();
   }
 }
