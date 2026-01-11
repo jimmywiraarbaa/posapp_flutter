@@ -43,17 +43,14 @@ class ProductMasterTab extends ConsumerWidget {
     final categoryById = {
       for (final category in categories) category.id: category,
     };
-    final unitById = {
-      for (final unit in units) unit.id: unit,
-    };
+    final unitById = {for (final unit in units) unit.id: unit};
 
     return ListView.separated(
       itemCount: products.length,
       separatorBuilder: (_, __) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final product = products[index];
-        final categoryLabel =
-            categoryById[product.categoryId]?.name ?? '-';
+        final categoryLabel = categoryById[product.categoryId]?.name ?? '-';
         final unitLabel = unitById[product.unitId]?.name ?? '-';
         return _ProductTile(
           product: product,
@@ -80,9 +77,9 @@ class _ProductTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final subtitle = <String>[
       categoryLabel,
-      unitLabel,
       'Rp ${product.price}',
       'Stok ${product.stockQty}',
+      unitLabel,
       if (!product.isActive) 'Nonaktif',
     ].join(' • ');
 
