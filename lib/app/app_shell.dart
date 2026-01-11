@@ -138,7 +138,9 @@ class _BottomNavItem extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOut,
                 width: isActive ? activeDiameter : inactiveDiameter,
                 height: isActive ? activeDiameter : inactiveDiameter,
                 alignment: Alignment.center,
@@ -173,9 +175,12 @@ class _BottomNavItem extends StatelessWidget {
                       )
                     : Icon(item.icon, size: 20, color: iconColor),
               ),
-              if (!isActive) ...[
-                const SizedBox(height: 4),
-                Text(
+              const SizedBox(height: 4),
+              AnimatedOpacity(
+                opacity: isActive ? 0 : 1,
+                duration: const Duration(milliseconds: 150),
+                curve: Curves.easeOut,
+                child: Text(
                   item.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -185,7 +190,7 @@ class _BottomNavItem extends StatelessWidget {
                     height: 1,
                   ),
                 ),
-              ],
+              ),
             ],
           ),
         ),
