@@ -23,4 +23,9 @@ class TransactionRepositoryImpl implements TransactionRepository {
   Future<List<TransactionItemRecord>> fetchItems(String transactionId) {
     return _localDataSource.fetchItems(transactionId);
   }
+
+  @override
+  Future<void> voidTransaction(String transactionId) {
+    return _localDataSource.voidTransaction(transactionId);
+  }
 }

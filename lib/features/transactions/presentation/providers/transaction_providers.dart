@@ -8,6 +8,7 @@ import '../../domain/entities/transaction_record.dart';
 import '../../domain/repositories/transaction_repository.dart';
 import '../../domain/usecases/create_sale.dart';
 import '../../domain/usecases/fetch_transaction_items.dart';
+import '../../domain/usecases/void_transaction.dart';
 import '../../domain/usecases/watch_transactions.dart';
 
 final transactionLocalDataSourceProvider =
@@ -34,6 +35,11 @@ final watchTransactionsProvider = Provider<WatchTransactions>((ref) {
 final fetchTransactionItemsProvider = Provider<FetchTransactionItems>((ref) {
   final repo = ref.watch(transactionRepositoryProvider);
   return FetchTransactionItems(repo);
+});
+
+final voidTransactionProvider = Provider<VoidTransaction>((ref) {
+  final repo = ref.watch(transactionRepositoryProvider);
+  return VoidTransaction(repo);
 });
 
 final transactionsStreamProvider =

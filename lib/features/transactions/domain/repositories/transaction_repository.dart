@@ -8,4 +8,6 @@ abstract class TransactionRepository {
   Stream<List<TransactionRecord>> watchAll({bool includeVoid = false});
 
   Future<List<TransactionItemRecord>> fetchItems(String transactionId);
+
+  Future<void> voidTransaction(String transactionId);
 }

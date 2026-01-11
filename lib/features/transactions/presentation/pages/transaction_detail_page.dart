@@ -29,6 +29,14 @@ class TransactionDetailPage extends ConsumerWidget {
                 const Text('Belum ada item.')
               else
                 ...items.map((item) => _ItemRow(item: item)),
+              if (record.status == 'completed') ...[
+                const SizedBox(height: 24),
+                FilledButton.icon(
+                  onPressed: () => _confirmVoid(context, ref, record),
+                  icon: const Icon(Icons.block),
+                  label: const Text('Void Transaksi'),
+                ),
+              ],
             ],
           );
         },
@@ -61,6 +69,8 @@ class _SummaryCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text('Metode: ${record.paymentMethod}'),
             const SizedBox(height: 4),
+            Text('Status: ${record.status}'),
+            const SizedBox(height: 4),
             Text('Total: Rp ${record.total}'),
             const SizedBox(height: 4),
             Text('Bayar: Rp ${record.paidAmount}'),
@@ -69,6 +79,52 @@ class _SummaryCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+Future<void> _confirmVoid(
+  BuildContext context,
+  WidgetRef ref,
+  TransactionRecord record,
+) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Void Transaksi'),
+      content: const Text('Yakin ingin membatalkan transaksi ini?'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(false),
+          child: const Text('Batal'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(dialogContext).pop(true),
+          child: const Text('Void'),
+        ),
+      ],
+    ),
+  );
+
+  if (confirmed != true) {
+    return;
+  }
+
+  try {
+    await ref.read(voidTransactionProvider)(record.id);
+    if (!context.mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Transaksi berhasil dibatalkan.')),
+    );
+    Navigator.of(context).pop();
+  } catch (error) {
+    if (!context.mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(error.toString())),
     );
   }
 }

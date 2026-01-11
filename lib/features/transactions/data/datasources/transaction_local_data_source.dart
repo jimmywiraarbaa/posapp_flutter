@@ -17,15 +17,20 @@ class TransactionLocalDataSource {
           ..where((tbl) => tbl.id.isIn(productIds.toList())))
         .get();
     final productById = {for (final product in products) product.id: product};
+    final stockById = {
+      for (final product in products) product.id: product.stockQty,
+    };
 
     for (final item in transaction.items) {
       final product = productById[item.productId];
       if (product == null) {
         throw StateError('Produk tidak ditemukan.');
       }
-      if (product.stockQty < item.qty) {
+      final currentStock = stockById[item.productId] ?? 0;
+      if (currentStock < item.qty) {
         throw StateError('Stok tidak mencukupi untuk ${product.name}.');
       }
+      stockById[item.productId] = currentStock - item.qty;
     }
 
     final createdAt = transaction.createdAt.toIso8601String();
@@ -70,8 +75,7 @@ class TransactionLocalDataSource {
               ),
             );
 
-        final product = productById[item.productId]!;
-        final updatedStock = product.stockQty - item.qty;
+        final updatedStock = stockById[item.productId]!;
         await (_db.update(_db.products)
               ..where((tbl) => tbl.id.equals(item.productId)))
             .write(
@@ -136,5 +140,76 @@ class TransactionLocalDataSource {
           ),
         )
         .toList();
+  }
+
+  Future<void> voidTransaction(String transactionId) async {
+    final trxQuery = _db.select(_db.transactions)
+      ..where((tbl) => tbl.id.equals(transactionId));
+    final trx = await trxQuery.getSingleOrNull();
+    if (trx == null) {
+      throw StateError('Transaksi tidak ditemukan.');
+    }
+    if (trx.status == 'void') {
+      throw StateError('Transaksi sudah dibatalkan.');
+    }
+
+    final items = await (_db.select(_db.transactionItems)
+          ..where((tbl) => tbl.transactionId.equals(transactionId)))
+        .get();
+    if (items.isEmpty) {
+      throw StateError('Item transaksi tidak ditemukan.');
+    }
+
+    final productIds = items.map((item) => item.productId).toSet();
+    final products = await (_db.select(_db.products)
+          ..where((tbl) => tbl.id.isIn(productIds.toList())))
+        .get();
+    final stockById = {
+      for (final product in products) product.id: product.stockQty,
+    };
+    final productNameById = {
+      for (final product in products) product.id: product.name,
+    };
+
+    for (final item in items) {
+      final currentStock = stockById[item.productId];
+      if (currentStock == null) {
+        final name = productNameById[item.productId] ?? item.productId;
+        throw StateError('Produk $name tidak ditemukan.');
+      }
+      stockById[item.productId] = currentStock + item.qty;
+    }
+
+    final now = DateTime.now().toIso8601String();
+
+    await _db.transaction(() async {
+      await (_db.update(_db.transactions)
+            ..where((tbl) => tbl.id.equals(transactionId)))
+          .write(const db.TransactionsCompanion(status: Value('void')));
+
+      for (final item in items) {
+        await _db.into(_db.stockMovements).insert(
+              db.StockMovementsCompanion(
+                id: Value(generateId()),
+                productId: Value(item.productId),
+                type: const Value('void'),
+                qty: Value(item.qty),
+                refId: Value(transactionId),
+                note: const Value<String?>(null),
+                createdAt: Value(now),
+              ),
+            );
+
+        final updatedStock = stockById[item.productId]!;
+        await (_db.update(_db.products)
+              ..where((tbl) => tbl.id.equals(item.productId)))
+            .write(
+          db.ProductsCompanion(
+            stockQty: Value(updatedStock),
+            updatedAt: Value(now),
+          ),
+        );
+      }
+    });
   }
 }
