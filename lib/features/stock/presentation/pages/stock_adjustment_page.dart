@@ -5,16 +5,14 @@ import '../../../products/domain/entities/product.dart';
 import '../../../products/presentation/providers/product_providers.dart';
 import '../providers/stock_providers.dart';
 
-enum StockAdjustmentType {
-  increase,
-  decrease,
-}
+enum StockAdjustmentType { increase, decrease }
 
 class StockAdjustmentPage extends ConsumerStatefulWidget {
   const StockAdjustmentPage({super.key});
 
   @override
-  ConsumerState<StockAdjustmentPage> createState() => _StockAdjustmentPageState();
+  ConsumerState<StockAdjustmentPage> createState() =>
+      _StockAdjustmentPageState();
 }
 
 class _StockAdjustmentPageState extends ConsumerState<StockAdjustmentPage> {
@@ -55,18 +53,19 @@ class _StockAdjustmentPageState extends ConsumerState<StockAdjustmentPage> {
     }
 
     final qty = _parseDouble(_qtyController.text);
-    if (_type == StockAdjustmentType.decrease && qty > selectedProduct.stockQty) {
+    if (_type == StockAdjustmentType.decrease &&
+        qty > selectedProduct.stockQty) {
       _showMessage('Stok tidak mencukupi.');
       return;
     }
 
     try {
       await ref.read(adjustStockProvider)(
-            productId: _productId!,
-            qty: qty,
-            increase: _type == StockAdjustmentType.increase,
-            note: _noteController.text.trim(),
-          );
+        productId: _productId!,
+        qty: qty,
+        increase: _type == StockAdjustmentType.increase,
+        note: _noteController.text.trim(),
+      );
       if (mounted) {
         Navigator.of(context).pop();
       }
@@ -76,9 +75,9 @@ class _StockAdjustmentPageState extends ConsumerState<StockAdjustmentPage> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   double _parseDouble(String value) {
@@ -127,7 +126,7 @@ class _StockAdjustmentPageState extends ConsumerState<StockAdjustmentPage> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<StockAdjustmentType>(
-                  value: _type,
+                  initialValue: _type,
                   decoration: const InputDecoration(labelText: 'Tipe'),
                   items: const [
                     DropdownMenuItem(
@@ -149,8 +148,9 @@ class _StockAdjustmentPageState extends ConsumerState<StockAdjustmentPage> {
                 TextFormField(
                   controller: _qtyController,
                   decoration: const InputDecoration(labelText: 'Qty'),
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   validator: _validateQty,
                 ),
                 const SizedBox(height: 12),
@@ -160,10 +160,7 @@ class _StockAdjustmentPageState extends ConsumerState<StockAdjustmentPage> {
                   validator: _validateNote,
                 ),
                 const SizedBox(height: 24),
-                FilledButton(
-                  onPressed: _save,
-                  child: const Text('Simpan'),
-                ),
+                FilledButton(onPressed: _save, child: const Text('Simpan')),
               ],
             ),
           );
@@ -189,14 +186,12 @@ class _ProductDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String>(
-      value: value,
+      initialValue: value,
       decoration: const InputDecoration(labelText: 'Produk'),
       items: products
           .map(
-            (product) => DropdownMenuItem(
-              value: product.id,
-              child: Text(product.name),
-            ),
+            (product) =>
+                DropdownMenuItem(value: product.id, child: Text(product.name)),
           )
           .toList(),
       onChanged: onChanged,

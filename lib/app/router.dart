@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../features/masters/presentation/pages/data_master_page.dart';
 import '../features/settings/presentation/pages/settings_page.dart';
-import 'app_shell.dart';
+import 'auth_gate.dart';
 
 class AppRoutes {
   static const home = '/';
@@ -14,7 +14,7 @@ class AppRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case AppRoutes.home:
-        return MaterialPageRoute(builder: (_) => const AppShell());
+        return MaterialPageRoute(builder: (_) => const AuthGate());
       case AppRoutes.dataMaster:
         return MaterialPageRoute(builder: (_) => const DataMasterPage());
       case AppRoutes.settings:

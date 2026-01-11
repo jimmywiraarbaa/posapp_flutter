@@ -71,10 +71,10 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
 
     try {
       await ref.read(createSaleProvider)(
-            items: saleItems,
-            paidAmount: paidAmount,
-            paymentMethod: _paymentMethod,
-          );
+        items: saleItems,
+        paidAmount: paidAmount,
+        paymentMethod: _paymentMethod,
+      );
       ref.read(cartProvider.notifier).clear();
       if (mounted) {
         Navigator.of(context).pop();
@@ -85,9 +85,9 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   String? _validatePaid(String? value, int total) {
@@ -106,9 +106,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     final cart = ref.watch(cartProvider);
 
     if (cart.items.isEmpty) {
-      return const Scaffold(
-        body: Center(child: Text('Keranjang kosong.')),
-      );
+      return const Scaffold(body: Center(child: Text('Keranjang kosong.')));
     }
 
     final total = cart.total;
@@ -127,14 +125,12 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
             Text('Total: Rp $total'),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _paymentMethod,
+              initialValue: _paymentMethod,
               decoration: const InputDecoration(labelText: 'Metode Bayar'),
               items: _paymentMethods
                   .map(
-                    (method) => DropdownMenuItem(
-                      value: method,
-                      child: Text(method),
-                    ),
+                    (method) =>
+                        DropdownMenuItem(value: method, child: Text(method)),
                   )
                   .toList(),
               onChanged: (value) {

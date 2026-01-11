@@ -39,12 +39,12 @@ class _StockInPageState extends ConsumerState<StockInPage> {
 
     try {
       await ref.read(addStockInProvider)(
-            productId: _productId!,
-            qty: qty,
-            note: _noteController.text.trim().isEmpty
-                ? null
-                : _noteController.text.trim(),
-          );
+        productId: _productId!,
+        qty: qty,
+        note: _noteController.text.trim().isEmpty
+            ? null
+            : _noteController.text.trim(),
+      );
       if (mounted) {
         Navigator.of(context).pop();
       }
@@ -54,9 +54,9 @@ class _StockInPageState extends ConsumerState<StockInPage> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   double _parseDouble(String value) {
@@ -100,8 +100,9 @@ class _StockInPageState extends ConsumerState<StockInPage> {
                 TextFormField(
                   controller: _qtyController,
                   decoration: const InputDecoration(labelText: 'Qty Masuk'),
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   validator: _validateQty,
                 ),
                 const SizedBox(height: 12),
@@ -110,10 +111,7 @@ class _StockInPageState extends ConsumerState<StockInPage> {
                   decoration: const InputDecoration(labelText: 'Catatan'),
                 ),
                 const SizedBox(height: 24),
-                FilledButton(
-                  onPressed: _save,
-                  child: const Text('Simpan'),
-                ),
+                FilledButton(onPressed: _save, child: const Text('Simpan')),
               ],
             ),
           );
@@ -139,14 +137,12 @@ class _ProductDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String>(
-      value: value,
+      initialValue: value,
       decoration: const InputDecoration(labelText: 'Produk'),
       items: products
           .map(
-            (product) => DropdownMenuItem(
-              value: product.id,
-              child: Text(product.name),
-            ),
+            (product) =>
+                DropdownMenuItem(value: product.id, child: Text(product.name)),
           )
           .toList(),
       onChanged: onChanged,

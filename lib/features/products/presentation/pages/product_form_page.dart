@@ -93,9 +93,9 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<bool> _isNameDuplicate(String name) async {
@@ -175,14 +175,18 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
             TextFormField(
               controller: _stockController,
               decoration: const InputDecoration(labelText: 'Stok Awal'),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               validator: _validateNumber,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _minStockController,
               decoration: const InputDecoration(labelText: 'Stok Minimal'),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               validator: _validateNumber,
             ),
             const SizedBox(height: 12),
@@ -198,10 +202,7 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
               onChanged: (value) => setState(() => _unitId = value),
             ),
             const SizedBox(height: 24),
-            FilledButton(
-              onPressed: _save,
-              child: const Text('Simpan'),
-            ),
+            FilledButton(onPressed: _save, child: const Text('Simpan')),
           ],
         ),
       ),
@@ -228,7 +229,7 @@ class _CategoryField extends StatelessWidget {
           return const Text('Belum ada kategori.');
         }
         return DropdownButtonFormField<String>(
-          value: value,
+          initialValue: value,
           decoration: const InputDecoration(labelText: 'Kategori'),
           items: items
               .map(
@@ -272,7 +273,7 @@ class _UnitField extends StatelessWidget {
           return const Text('Belum ada satuan.');
         }
         return DropdownButtonFormField<String>(
-          value: value,
+          initialValue: value,
           decoration: const InputDecoration(labelText: 'Satuan'),
           items: items
               .map(
