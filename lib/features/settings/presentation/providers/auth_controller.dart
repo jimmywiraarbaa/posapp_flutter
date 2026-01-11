@@ -26,6 +26,11 @@ class AuthController extends StateNotifier<AuthState> {
     );
   }
 
+  Future<void> reload() async {
+    state = state.copyWith(stage: AuthStage.loading);
+    await _initialize();
+  }
+
   Future<void> verifyPin(String pin) async {
     final valid = await _pinRepository.verifyPin(pin);
     if (!valid) {
