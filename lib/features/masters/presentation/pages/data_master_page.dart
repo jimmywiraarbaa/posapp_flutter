@@ -1,79 +1,69 @@
 import 'package:flutter/material.dart';
 
-class DataMasterPage extends StatelessWidget {
+import '../../../categories/presentation/pages/category_form_page.dart';
+import '../../../products/presentation/pages/product_form_page.dart';
+import '../../../units/presentation/pages/unit_form_page.dart';
+import '../widgets/category_master_tab.dart';
+import '../widgets/product_master_tab.dart';
+import '../widgets/unit_master_tab.dart';
+
+class DataMasterPage extends StatefulWidget {
   const DataMasterPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text('Data Master'),
-          bottom: TabBar(
-            tabs: [
-              Tab(text: 'Produk'),
-              Tab(text: 'Satuan'),
-              Tab(text: 'Kategori'),
-            ],
-          ),
-        ),
-        body: TabBarView(
-          children: [
-            MasterListPlaceholder(
-              title: 'Produk',
-              emptyMessage: 'Belum ada produk.',
-            ),
-            MasterListPlaceholder(
-              title: 'Satuan',
-              emptyMessage: 'Belum ada satuan.',
-            ),
-            MasterListPlaceholder(
-              title: 'Kategori',
-              emptyMessage: 'Belum ada kategori.',
-            ),
-          ],
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {},
-          child: Icon(Icons.add),
-        ),
-      ),
-    );
-  }
+  State<DataMasterPage> createState() => _DataMasterPageState();
 }
 
-class MasterListPlaceholder extends StatelessWidget {
-  const MasterListPlaceholder({
-    super.key,
-    required this.title,
-    required this.emptyMessage,
-  });
+class _DataMasterPageState extends State<DataMasterPage>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
 
-  final String title;
-  final String emptyMessage;
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  void _openForm() {
+    final route = switch (_tabController.index) {
+      0 => MaterialPageRoute(builder: (_) => const ProductFormPage()),
+      1 => MaterialPageRoute(builder: (_) => const UnitFormPage()),
+      _ => MaterialPageRoute(builder: (_) => const CategoryFormPage()),
+    };
+    Navigator.of(context).push(route);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.inbox, size: 40, color: Colors.grey),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            emptyMessage,
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(color: Colors.grey),
-          ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Data Master'),
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(text: 'Produk'),
+            Tab(text: 'Satuan'),
+            Tab(text: 'Kategori'),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: const [
+          ProductMasterTab(),
+          UnitMasterTab(),
+          CategoryMasterTab(),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _openForm,
+        child: const Icon(Icons.add),
       ),
     );
   }
