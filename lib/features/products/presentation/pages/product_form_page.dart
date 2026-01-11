@@ -64,13 +64,18 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
       _showMessage('Kategori dan satuan wajib dipilih.');
       return;
     }
+    final name = _nameController.text.trim();
+    if (await _isNameDuplicate(name)) {
+      _showMessage('Nama produk sudah digunakan.');
+      return;
+    }
 
     final now = DateTime.now();
     final existing = widget.initialProduct;
 
     final product = Product(
       id: existing?.id ?? generateId(),
-      name: _nameController.text.trim(),
+      name: name,
       categoryId: _categoryId!,
       unitId: _unitId!,
       price: int.parse(_priceController.text.trim()),
@@ -90,6 +95,17 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
+    );
+  }
+
+  Future<bool> _isNameDuplicate(String name) async {
+    final repo = ref.read(productRepositoryProvider);
+    final items = await repo.fetchAll(includeInactive: true);
+    final normalized = name.toLowerCase();
+    return items.any(
+      (item) =>
+          item.id != widget.initialProduct?.id &&
+          item.name.trim().toLowerCase() == normalized,
     );
   }
 

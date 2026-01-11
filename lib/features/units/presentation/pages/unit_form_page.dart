@@ -39,11 +39,16 @@ class _UnitFormPageState extends ConsumerState<UnitFormPage> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
+    final name = _nameController.text.trim();
+    if (await _isNameDuplicate(name)) {
+      _showMessage('Nama satuan sudah digunakan.');
+      return;
+    }
     final now = DateTime.now();
     final existing = widget.initialUnit;
     final unit = Unit(
       id: existing?.id ?? generateId(),
-      name: _nameController.text.trim(),
+      name: name,
       symbol: _symbolController.text.trim(),
       isActive: existing?.isActive ?? true,
       createdAt: existing?.createdAt ?? now,
@@ -54,6 +59,23 @@ class _UnitFormPageState extends ConsumerState<UnitFormPage> {
     if (mounted) {
       Navigator.of(context).pop();
     }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  Future<bool> _isNameDuplicate(String name) async {
+    final repo = ref.read(unitRepositoryProvider);
+    final items = await repo.fetchAll(includeInactive: true);
+    final normalized = name.toLowerCase();
+    return items.any(
+      (item) =>
+          item.id != widget.initialUnit?.id &&
+          item.name.trim().toLowerCase() == normalized,
+    );
   }
 
   String? _validateRequired(String? value) {
