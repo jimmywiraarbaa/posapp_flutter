@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../products/domain/entities/product.dart';
 import '../../../products/presentation/providers/product_providers.dart';
+import '../../../../shared/formatters/currency.dart';
 import '../providers/cart_provider.dart';
 import '../providers/cart_state.dart';
 import 'checkout_page.dart';
@@ -24,8 +25,9 @@ class PosPage extends ConsumerWidget {
                 return const Center(child: Text('Belum ada produk aktif.'));
               }
               return ListView.separated(
+                padding: const EdgeInsets.symmetric(vertical: 12),
                 itemCount: items.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
+                separatorBuilder: (_, __) => const SizedBox(height: 8),
                 itemBuilder: (context, index) {
                   final product = items[index];
                   return _ProductTile(product: product);
@@ -49,24 +51,44 @@ class _ProductTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final subtitle = <String>[
-      'Rp ${product.price}',
-      'Stok ${product.stockQty}',
-    ].join(' • ');
+    final isOutOfStock = product.stockQty <= 0;
+    final stockLabel = 'Stok ${formatQty(product.stockQty)}';
 
-    return ListTile(
-      title: Text(product.name),
-      subtitle: Text(subtitle),
-      trailing: FilledButton(
-        onPressed: () {
-          final message = ref.read(cartProvider.notifier).addProduct(product);
-          if (message != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(message)),
-            );
-          }
-        },
-        child: const Text('Tambah'),
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      child: ListTile(
+        title: Text(product.name),
+        subtitle: Wrap(
+          spacing: 12,
+          runSpacing: 4,
+          children: [
+            _MetaInfo(
+              icon: Icons.sell_outlined,
+              label: formatRupiah(product.price),
+            ),
+            _MetaInfo(
+              icon: Icons.inventory_2_outlined,
+              label: stockLabel,
+              color: isOutOfStock
+                  ? Theme.of(context).colorScheme.error
+                  : null,
+            ),
+          ],
+        ),
+        trailing: FilledButton(
+          onPressed: isOutOfStock
+              ? null
+              : () {
+                  final message =
+                      ref.read(cartProvider.notifier).addProduct(product);
+                  if (message != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(message)),
+                    );
+                  }
+                },
+          child: Text(isOutOfStock ? 'Habis' : 'Tambah'),
+        ),
       ),
     );
   }
@@ -81,9 +103,26 @@ class _CartPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (cart.items.isEmpty) {
       return Container(
-        padding: const EdgeInsets.all(16),
-        alignment: Alignment.centerLeft,
-        child: const Text('Keranjang kosong.'),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x22000000),
+              blurRadius: 6,
+              offset: Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.shopping_bag_outlined),
+            const SizedBox(width: 8),
+            const Text('Keranjang kosong.'),
+            const Spacer(),
+            Text(formatRupiah(0)),
+          ],
+        ),
       );
     }
 
@@ -108,8 +147,21 @@ class _CartPanel extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Text('Total: Rp ${cart.total}'),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Item: ${cart.totalItems}'),
+                  Text(
+                    formatRupiah(cart.total),
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ],
+              ),
               const Spacer(),
+              IconButton(
+                onPressed: () => _confirmClear(context, ref),
+                icon: const Icon(Icons.delete_outline),
+              ),
               FilledButton(
                 onPressed: () {
                   Navigator.of(context).push(
@@ -121,14 +173,16 @@ class _CartPanel extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 8),
-          SizedBox(
-            height: 160,
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 200),
             child: ListView.separated(
+              shrinkWrap: true,
               itemCount: cart.items.length,
               separatorBuilder: (_, __) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 final item = cart.items[index];
-                final maxQty = stockById[item.productId]?.stockQty ?? item.stockQty;
+                final maxQty =
+                    stockById[item.productId]?.stockQty ?? item.stockQty;
                 return _CartItemTile(item: item, maxQty: maxQty);
               },
             ),
@@ -149,7 +203,7 @@ class _CartItemTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return ListTile(
       title: Text(item.name),
-      subtitle: Text('Rp ${item.subtotal}'),
+      subtitle: Text(formatRupiah(item.subtotal)),
       trailing: SizedBox(
         width: 140,
         child: Row(
@@ -164,7 +218,7 @@ class _CartItemTile extends ConsumerWidget {
               },
               icon: const Icon(Icons.remove_circle_outline),
             ),
-            Text(item.qty.toString()),
+            Text(formatQty(item.qty)),
             IconButton(
               onPressed: () {
                 final message = ref.read(cartProvider.notifier).updateQty(
@@ -184,5 +238,59 @@ class _CartItemTile extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+class _MetaInfo extends StatelessWidget {
+  const _MetaInfo({
+    required this.icon,
+    required this.label,
+    this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final resolvedColor = color ?? theme.colorScheme.onSurfaceVariant;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: resolvedColor),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(color: resolvedColor),
+        ),
+      ],
+    );
+  }
+}
+
+Future<void> _confirmClear(BuildContext context, WidgetRef ref) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Kosongkan Keranjang'),
+      content: const Text('Yakin ingin menghapus semua item di keranjang?'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(false),
+          child: const Text('Batal'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(dialogContext).pop(true),
+          child: const Text('Hapus'),
+        ),
+      ],
+    ),
+  );
+
+  if (confirmed == true) {
+    ref.read(cartProvider.notifier).clear();
   }
 }
