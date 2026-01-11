@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import '../../../../core/db/app_database.dart' as db;
 import '../../../../core/utils/id_generator.dart';
 import '../../domain/entities/sale.dart';
+import '../../domain/entities/transaction_record.dart';
 
 class TransactionLocalDataSource {
   TransactionLocalDataSource(this._db);
@@ -80,5 +81,29 @@ class TransactionLocalDataSource {
         );
       }
     });
+  }
+
+  Stream<List<TransactionRecord>> watchAll({bool includeVoid = false}) {
+    final query = _db.select(_db.transactions)
+      ..orderBy([
+        (tbl) => OrderingTerm(expression: tbl.createdAt, mode: OrderingMode.desc),
+      ]);
+    if (!includeVoid) {
+      query.where((tbl) => tbl.status.equals('completed'));
+    }
+    return query.watch().map(
+          (rows) => rows.map(_mapRecord).toList(),
+        );
+  }
+
+  TransactionRecord _mapRecord(db.Transaction data) {
+    return TransactionRecord(
+      id: data.id,
+      trxNumber: data.trxNumber,
+      total: data.total,
+      paymentMethod: data.paymentMethod,
+      status: data.status,
+      createdAt: DateTime.parse(data.createdAt),
+    );
   }
 }
