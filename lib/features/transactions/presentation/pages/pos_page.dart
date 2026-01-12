@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../products/domain/entities/product.dart';
-import '../../../products/presentation/providers/product_providers.dart';
 import '../../../../shared/formatters/currency.dart';
 import '../../../../shared/widgets/product_image.dart';
+import '../../../categories/domain/entities/category.dart';
+import '../../../categories/presentation/providers/category_providers.dart';
+import '../../../products/domain/entities/product.dart';
+import '../../../products/presentation/providers/product_providers.dart';
 import '../providers/cart_provider.dart';
 import '../providers/cart_state.dart';
 import 'checkout_page.dart';
@@ -15,6 +17,7 @@ class PosPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final productsAsync = ref.watch(productsStreamProvider(false));
+    final categoriesAsync = ref.watch(categoriesStreamProvider(true));
     final cart = ref.watch(cartProvider);
 
     return Column(
@@ -25,18 +28,43 @@ class PosPage extends ConsumerWidget {
               if (items.isEmpty) {
                 return const Center(child: Text('Belum ada produk aktif.'));
               }
-              return GridView.builder(
+              final categories = categoriesAsync.value ?? const <Category>[];
+              final categoryNames = {
+                for (final category in categories) category.id: category.name,
+              };
+              final sections = _groupProductsByCategory(items, categoryNames);
+              return ListView.separated(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 220,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 0.75,
-                ),
-                itemCount: items.length,
+                itemCount: sections.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 16),
                 itemBuilder: (context, index) {
-                  final product = items[index];
-                  return _ProductCard(product: product);
+                  final section = sections[index];
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _CategoryHeader(
+                        title: section.name,
+                        count: section.products.length,
+                      ),
+                      const SizedBox(height: 8),
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 220,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 0.75,
+                        ),
+                        itemCount: section.products.length,
+                        itemBuilder: (context, productIndex) {
+                          final product = section.products[productIndex];
+                          return _ProductCard(product: product);
+                        },
+                      ),
+                    ],
+                  );
                 },
               );
             },
@@ -45,6 +73,85 @@ class PosPage extends ConsumerWidget {
           ),
         ),
         _CartPanel(cart: cart),
+      ],
+    );
+  }
+}
+
+class _CategorySection {
+  const _CategorySection({
+    required this.id,
+    required this.name,
+    required this.products,
+  });
+
+  final String id;
+  final String name;
+  final List<Product> products;
+}
+
+List<_CategorySection> _groupProductsByCategory(
+  List<Product> products,
+  Map<String, String> categoryNames,
+) {
+  const unknownKey = '__unknown__';
+  final grouped = <String, List<Product>>{};
+  for (final product in products) {
+    final hasCategory = categoryNames.containsKey(product.categoryId);
+    final key = hasCategory ? product.categoryId : unknownKey;
+    grouped.putIfAbsent(key, () => []).add(product);
+  }
+
+  final sections = grouped.entries.map((entry) {
+    final name = entry.key == unknownKey
+        ? 'Tanpa kategori'
+        : categoryNames[entry.key] ?? 'Tanpa kategori';
+    final sortedProducts = [...entry.value]
+      ..sort((a, b) => a.name.compareTo(b.name));
+    return _CategorySection(
+      id: entry.key,
+      name: name,
+      products: sortedProducts,
+    );
+  }).toList();
+
+  sections.sort((a, b) {
+    if (a.name == 'Tanpa kategori') {
+      return 1;
+    }
+    if (b.name == 'Tanpa kategori') {
+      return -1;
+    }
+    return a.name.compareTo(b.name);
+  });
+
+  return sections;
+}
+
+class _CategoryHeader extends StatelessWidget {
+  const _CategoryHeader({required this.title, required this.count});
+
+  final String title;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Text(
+          title,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const Spacer(),
+        Text(
+          '$count item',
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
       ],
     );
   }
