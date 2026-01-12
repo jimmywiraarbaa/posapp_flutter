@@ -31,7 +31,7 @@ class PosPage extends ConsumerWidget {
                   maxCrossAxisExtent: 220,
                   mainAxisSpacing: 12,
                   crossAxisSpacing: 12,
-                  childAspectRatio: 0.82,
+                  childAspectRatio: 0.75,
                 ),
                 itemCount: items.length,
                 itemBuilder: (context, index) {
