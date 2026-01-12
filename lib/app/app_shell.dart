@@ -132,6 +132,8 @@ class _BottomNavItem extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(24),
+        splashFactory: NoSplash.splashFactory,
+        overlayColor: WidgetStateProperty.all(Colors.transparent),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
           child: Column(
