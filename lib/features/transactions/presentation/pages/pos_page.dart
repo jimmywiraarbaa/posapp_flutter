@@ -24,13 +24,18 @@ class PosPage extends ConsumerWidget {
               if (items.isEmpty) {
                 return const Center(child: Text('Belum ada produk aktif.'));
               }
-              return ListView.separated(
-                padding: const EdgeInsets.symmetric(vertical: 12),
+              return GridView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 220,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 0.82,
+                ),
                 itemCount: items.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
                 itemBuilder: (context, index) {
                   final product = items[index];
-                  return _ProductTile(product: product);
+                  return _ProductCard(product: product);
                 },
               );
             },
@@ -44,8 +49,8 @@ class PosPage extends ConsumerWidget {
   }
 }
 
-class _ProductTile extends ConsumerWidget {
-  const _ProductTile({required this.product});
+class _ProductCard extends ConsumerWidget {
+  const _ProductCard({required this.product});
 
   final Product product;
 
@@ -53,41 +58,78 @@ class _ProductTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isOutOfStock = product.stockQty <= 0;
     final stockLabel = 'Stok ${formatQty(product.stockQty)}';
+    final theme = Theme.of(context);
+    final stockColor = isOutOfStock
+        ? theme.colorScheme.error
+        : theme.colorScheme.onSurfaceVariant;
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      child: ListTile(
-        title: Text(product.name),
-        subtitle: Wrap(
-          spacing: 12,
-          runSpacing: 4,
-          children: [
-            _MetaInfo(
-              icon: Icons.sell_outlined,
-              label: formatRupiah(product.price),
-            ),
-            _MetaInfo(
-              icon: Icons.inventory_2_outlined,
-              label: stockLabel,
-              color: isOutOfStock
-                  ? Theme.of(context).colorScheme.error
-                  : null,
-            ),
-          ],
-        ),
-        trailing: FilledButton(
-          onPressed: isOutOfStock
-              ? null
-              : () {
-                  final message =
-                      ref.read(cartProvider.notifier).addProduct(product);
-                  if (message != null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(message)),
-                    );
-                  }
-                },
-          child: Text(isOutOfStock ? 'Habis' : 'Tambah'),
+      child: InkWell(
+        onTap: isOutOfStock
+            ? null
+            : () {
+                final message =
+                    ref.read(cartProvider.notifier).addProduct(product);
+                if (message != null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(message)),
+                  );
+                }
+              },
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                product.name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleSmall,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                formatRupiah(product.price),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Icon(
+                    Icons.inventory_2_outlined,
+                    size: 16,
+                    color: stockColor,
+                  ),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      stockLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: stockColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  isOutOfStock ? 'Stok habis' : 'Tap untuk tambah',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: isOutOfStock
+                        ? theme.colorScheme.error
+                        : theme.colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -237,36 +279,6 @@ class _CartItemTile extends ConsumerWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _MetaInfo extends StatelessWidget {
-  const _MetaInfo({
-    required this.icon,
-    required this.label,
-    this.color,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final resolvedColor = color ?? theme.colorScheme.onSurfaceVariant;
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 16, color: resolvedColor),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(color: resolvedColor),
-        ),
-      ],
     );
   }
 }
