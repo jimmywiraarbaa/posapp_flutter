@@ -222,7 +222,8 @@ class _CartPanel extends ConsumerWidget {
               itemCount: cart.items.length,
               separatorBuilder: (_, __) => const Divider(height: 1),
               itemBuilder: (context, index) {
-                final item = cart.items[index];
+                final reversedIndex = cart.items.length - 1 - index;
+                final item = cart.items[reversedIndex];
                 final maxQty =
                     stockById[item.productId]?.stockQty ?? item.stockQty;
                 return _CartItemTile(item: item, maxQty: maxQty);
