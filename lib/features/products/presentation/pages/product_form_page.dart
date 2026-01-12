@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -162,16 +164,58 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
       return;
     }
 
+    if (!mounted) {
+      return;
+    }
+
+    final theme = Theme.of(context);
+    CroppedFile? cropped;
+    try {
+      cropped = await ImageCropper().cropImage(
+        sourcePath: picked.path,
+        aspectRatio: const CropAspectRatio(ratioX: 4, ratioY: 3),
+        compressQuality: 85,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Edit Gambar',
+            toolbarColor: theme.colorScheme.surface,
+            toolbarWidgetColor: theme.colorScheme.onSurface,
+            activeControlsWidgetColor: theme.colorScheme.primary,
+            initAspectRatio: CropAspectRatioPreset.ratio4x3,
+            aspectRatioPresets: const [CropAspectRatioPreset.ratio4x3],
+            lockAspectRatio: true,
+          ),
+          IOSUiSettings(
+            title: 'Edit Gambar',
+            aspectRatioLockEnabled: true,
+            aspectRatioPickerButtonHidden: true,
+            resetAspectRatioEnabled: false,
+          ),
+        ],
+      );
+    } on PlatformException catch (_) {
+      if (mounted) {
+        _showMessage('Gagal membuka editor gambar.');
+      }
+      return;
+    }
+
+    if (cropped == null) {
+      return;
+    }
+
     final docs = await getApplicationDocumentsDirectory();
     final dir = Directory(p.join(docs.path, 'product_images'));
     if (!await dir.exists()) {
       await dir.create(recursive: true);
     }
 
-    final extension = p.extension(picked.path);
+    final extension = p.extension(cropped.path);
     final fileName = '${generateId()}${extension.isEmpty ? '.jpg' : extension}';
     final target = File(p.join(dir.path, fileName));
-    final copied = await File(picked.path).copy(target.path);
+    final copied = await File(cropped.path).copy(target.path);
 
     await _deleteLocalImage(_imagePath);
     if (!mounted) {
@@ -239,7 +283,7 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
             const SizedBox(height: 12),
             ProductImage(
               imagePath: _imagePath,
-              aspectRatio: 16 / 9,
+              aspectRatio: 4 / 3,
             ),
             const SizedBox(height: 12),
             TextFormField(
