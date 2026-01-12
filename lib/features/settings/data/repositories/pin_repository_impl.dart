@@ -7,6 +7,12 @@ class PinRepositoryImpl implements PinRepository {
 
   final PinLocalDataSource _localDataSource;
 
+  void _ensureSixDigitPin(String pin) {
+    if (!RegExp(r'^\d{6}$').hasMatch(pin)) {
+      throw StateError('PIN harus 6 digit angka.');
+    }
+  }
+
   @override
   Future<bool> hasPin() {
     return _localDataSource.hasPin();
@@ -14,13 +20,17 @@ class PinRepositoryImpl implements PinRepository {
 
   @override
   Future<void> setPin(String pin) {
-    final hash = hashPin(pin);
+    final normalized = pin.trim();
+    _ensureSixDigitPin(normalized);
+    final hash = hashPin(normalized);
     return _localDataSource.setPin(pinHash: hash);
   }
 
   @override
   Future<bool> verifyPin(String pin) {
-    final hash = hashPin(pin);
+    final normalized = pin.trim();
+    _ensureSixDigitPin(normalized);
+    final hash = hashPin(normalized);
     return _localDataSource.verifyPin(pinHash: hash);
   }
 }

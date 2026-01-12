@@ -52,8 +52,8 @@ class _ChangePinPageState extends ConsumerState<ChangePinPage> {
     if (value == null || value.trim().isEmpty) {
       return 'Wajib diisi.';
     }
-    if (!RegExp(r'^\d{4,6}$').hasMatch(value.trim())) {
-      return 'PIN harus 4-6 digit angka.';
+    if (!RegExp(r'^\d{6}$').hasMatch(value.trim())) {
+      return 'PIN harus 6 digit angka.';
     }
     return null;
   }
