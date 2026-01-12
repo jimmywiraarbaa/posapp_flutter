@@ -11,6 +11,10 @@ import '../providers/cart_provider.dart';
 import '../providers/cart_state.dart';
 import 'checkout_page.dart';
 
+const _unknownCategoryKey = '__unknown__';
+
+final selectedCategoryFilterProvider = StateProvider<String?>((ref) => null);
+
 class PosPage extends ConsumerWidget {
   const PosPage({super.key});
 
@@ -19,9 +23,34 @@ class PosPage extends ConsumerWidget {
     final productsAsync = ref.watch(productsStreamProvider(false));
     final categoriesAsync = ref.watch(categoriesStreamProvider(true));
     final cart = ref.watch(cartProvider);
+    final selectedCategoryId = ref.watch(selectedCategoryFilterProvider);
 
     return Column(
       children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          child: categoriesAsync.when(
+            data: (categories) {
+              final names = {
+                for (final category in categories) category.id: category.name,
+              };
+              final items = productsAsync.value ?? const <Product>[];
+              final sections = _groupProductsByCategory(items, names);
+              final hasSelected = selectedCategoryId != null &&
+                  sections.any((section) => section.id == selectedCategoryId);
+              final effectiveSelected = hasSelected ? selectedCategoryId : null;
+              return _CategoryFilterChips(
+                sections: sections,
+                selectedId: effectiveSelected,
+                onSelected: (id) {
+                  ref.read(selectedCategoryFilterProvider.notifier).state = id;
+                },
+              );
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+        ),
         Expanded(
           child: productsAsync.when(
             data: (items) {
@@ -33,12 +62,20 @@ class PosPage extends ConsumerWidget {
                 for (final category in categories) category.id: category.name,
               };
               final sections = _groupProductsByCategory(items, categoryNames);
+              final hasSelected = selectedCategoryId != null &&
+                  sections.any((section) => section.id == selectedCategoryId);
+              final effectiveSelected = hasSelected ? selectedCategoryId : null;
+              final visibleSections = effectiveSelected == null
+                  ? sections
+                  : sections
+                      .where((section) => section.id == effectiveSelected)
+                      .toList();
               return ListView.separated(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                itemCount: sections.length,
+                itemCount: visibleSections.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 16),
                 itemBuilder: (context, index) {
-                  final section = sections[index];
+                  final section = visibleSections[index];
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -94,16 +131,15 @@ List<_CategorySection> _groupProductsByCategory(
   List<Product> products,
   Map<String, String> categoryNames,
 ) {
-  const unknownKey = '__unknown__';
   final grouped = <String, List<Product>>{};
   for (final product in products) {
     final hasCategory = categoryNames.containsKey(product.categoryId);
-    final key = hasCategory ? product.categoryId : unknownKey;
+    final key = hasCategory ? product.categoryId : _unknownCategoryKey;
     grouped.putIfAbsent(key, () => []).add(product);
   }
 
   final sections = grouped.entries.map((entry) {
-    final name = entry.key == unknownKey
+    final name = entry.key == _unknownCategoryKey
         ? 'Tanpa kategori'
         : categoryNames[entry.key] ?? 'Tanpa kategori';
     final sortedProducts = [...entry.value]
@@ -126,6 +162,47 @@ List<_CategorySection> _groupProductsByCategory(
   });
 
   return sections;
+}
+
+class _CategoryFilterChips extends StatelessWidget {
+  const _CategoryFilterChips({
+    required this.sections,
+    required this.selectedId,
+    required this.onSelected,
+  });
+
+  final List<_CategorySection> sections;
+  final String? selectedId;
+  final ValueChanged<String?> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final chips = <Widget>[
+      ChoiceChip(
+        label: const Text('Semua'),
+        selected: selectedId == null,
+        onSelected: (_) => onSelected(null),
+        shape: const StadiumBorder(),
+      ),
+    ];
+
+    for (final section in sections) {
+      chips.add(const SizedBox(width: 8));
+      chips.add(
+        ChoiceChip(
+          label: Text(section.name),
+          selected: selectedId == section.id,
+          onSelected: (selected) => onSelected(selected ? section.id : null),
+          shape: const StadiumBorder(),
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(children: chips),
+    );
+  }
 }
 
 class _CategoryHeader extends StatelessWidget {
