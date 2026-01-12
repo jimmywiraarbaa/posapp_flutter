@@ -174,12 +174,13 @@ class _CategoryFilterChips extends StatelessWidget {
   final List<_CategorySection> sections;
   final String? selectedId;
   final ValueChanged<String?> onSelected;
+  static const _labelMaxWidth = 140.0;
 
   @override
   Widget build(BuildContext context) {
     final chips = <Widget>[
       ChoiceChip(
-        label: const Text('Semua'),
+        label: const Text('Semua', maxLines: 1, overflow: TextOverflow.ellipsis),
         selected: selectedId == null,
         onSelected: (_) => onSelected(null),
         shape: const StadiumBorder(),
@@ -187,10 +188,16 @@ class _CategoryFilterChips extends StatelessWidget {
     ];
 
     for (final section in sections) {
-      chips.add(const SizedBox(width: 8));
       chips.add(
         ChoiceChip(
-          label: Text(section.name),
+          label: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: _labelMaxWidth),
+            child: Text(
+              section.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
           selected: selectedId == section.id,
           onSelected: (selected) => onSelected(selected ? section.id : null),
           shape: const StadiumBorder(),
@@ -198,15 +205,13 @@ class _CategoryFilterChips extends StatelessWidget {
       );
     }
 
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: SingleChildScrollView(
+    return SizedBox(
+      height: 44,
+      child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: chips,
-        ),
+        itemCount: chips.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) => chips[index],
       ),
     );
   }
@@ -223,13 +228,17 @@ class _CategoryHeader extends StatelessWidget {
     final theme = Theme.of(context);
     return Row(
       children: [
-        Text(
-          title,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
+        Expanded(
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
-        const Spacer(),
+        const SizedBox(width: 8),
         Text(
           '$count item',
           style: theme.textTheme.labelMedium?.copyWith(
