@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../products/domain/entities/product.dart';
 import '../../../products/presentation/providers/product_providers.dart';
 import '../../../../shared/formatters/currency.dart';
+import '../../../../shared/widgets/product_image.dart';
 import '../providers/cart_provider.dart';
 import '../providers/cart_state.dart';
 import 'checkout_page.dart';
@@ -79,47 +80,39 @@ class _ProductCard extends ConsumerWidget {
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              ProductImage(imagePath: product.imagePath),
+              const SizedBox(height: 8),
               Text(
                 product.name,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
                 style: theme.textTheme.titleSmall,
               ),
               const SizedBox(height: 6),
               Text(
                 formatRupiah(product.price),
+                textAlign: TextAlign.center,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 6),
-              Row(
-                children: [
-                  Icon(
-                    Icons.inventory_2_outlined,
-                    size: 16,
-                    color: stockColor,
-                  ),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      stockLabel,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: stockColor,
-                      ),
-                    ),
-                  ),
-                ],
+              Text(
+                stockLabel,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: stockColor,
+                ),
               ),
               const Spacer(),
               Align(
-                alignment: Alignment.centerLeft,
+                alignment: Alignment.center,
                 child: Text(
                   isOutOfStock ? 'Stok habis' : 'Tap untuk tambah',
+                  textAlign: TextAlign.center,
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: isOutOfStock
                         ? theme.colorScheme.error

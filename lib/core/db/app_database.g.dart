@@ -26,6 +26,17 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _imagePathMeta = const VerificationMeta(
+    'imagePath',
+  );
+  @override
+  late final GeneratedColumn<String> imagePath = GeneratedColumn<String>(
+    'image_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _categoryIdMeta = const VerificationMeta(
     'categoryId',
   );
@@ -117,6 +128,7 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
   List<GeneratedColumn> get $columns => [
     id,
     name,
+    imagePath,
     categoryId,
     unitId,
     price,
@@ -150,6 +162,12 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
       );
     } else if (isInserting) {
       context.missing(_nameMeta);
+    }
+    if (data.containsKey('image_path')) {
+      context.handle(
+        _imagePathMeta,
+        imagePath.isAcceptableOrUnknown(data['image_path']!, _imagePathMeta),
+      );
     }
     if (data.containsKey('category_id')) {
       context.handle(
@@ -232,6 +250,10 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
         DriftSqlType.string,
         data['${effectivePrefix}name'],
       )!,
+      imagePath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}image_path'],
+      ),
       categoryId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}category_id'],
@@ -276,6 +298,7 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
 class Product extends DataClass implements Insertable<Product> {
   final String id;
   final String name;
+  final String? imagePath;
   final String categoryId;
   final String unitId;
   final int price;
@@ -287,6 +310,7 @@ class Product extends DataClass implements Insertable<Product> {
   const Product({
     required this.id,
     required this.name,
+    this.imagePath,
     required this.categoryId,
     required this.unitId,
     required this.price,
@@ -301,6 +325,9 @@ class Product extends DataClass implements Insertable<Product> {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
     map['name'] = Variable<String>(name);
+    if (!nullToAbsent || imagePath != null) {
+      map['image_path'] = Variable<String>(imagePath);
+    }
     map['category_id'] = Variable<String>(categoryId);
     map['unit_id'] = Variable<String>(unitId);
     map['price'] = Variable<int>(price);
@@ -316,6 +343,9 @@ class Product extends DataClass implements Insertable<Product> {
     return ProductsCompanion(
       id: Value(id),
       name: Value(name),
+      imagePath: imagePath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imagePath),
       categoryId: Value(categoryId),
       unitId: Value(unitId),
       price: Value(price),
@@ -335,6 +365,7 @@ class Product extends DataClass implements Insertable<Product> {
     return Product(
       id: serializer.fromJson<String>(json['id']),
       name: serializer.fromJson<String>(json['name']),
+      imagePath: serializer.fromJson<String?>(json['imagePath']),
       categoryId: serializer.fromJson<String>(json['categoryId']),
       unitId: serializer.fromJson<String>(json['unitId']),
       price: serializer.fromJson<int>(json['price']),
@@ -351,6 +382,7 @@ class Product extends DataClass implements Insertable<Product> {
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'name': serializer.toJson<String>(name),
+      'imagePath': serializer.toJson<String?>(imagePath),
       'categoryId': serializer.toJson<String>(categoryId),
       'unitId': serializer.toJson<String>(unitId),
       'price': serializer.toJson<int>(price),
@@ -365,6 +397,7 @@ class Product extends DataClass implements Insertable<Product> {
   Product copyWith({
     String? id,
     String? name,
+    Value<String?> imagePath = const Value.absent(),
     String? categoryId,
     String? unitId,
     int? price,
@@ -376,6 +409,7 @@ class Product extends DataClass implements Insertable<Product> {
   }) => Product(
     id: id ?? this.id,
     name: name ?? this.name,
+    imagePath: imagePath.present ? imagePath.value : this.imagePath,
     categoryId: categoryId ?? this.categoryId,
     unitId: unitId ?? this.unitId,
     price: price ?? this.price,
@@ -389,6 +423,7 @@ class Product extends DataClass implements Insertable<Product> {
     return Product(
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
+      imagePath: data.imagePath.present ? data.imagePath.value : this.imagePath,
       categoryId: data.categoryId.present
           ? data.categoryId.value
           : this.categoryId,
@@ -407,6 +442,7 @@ class Product extends DataClass implements Insertable<Product> {
     return (StringBuffer('Product(')
           ..write('id: $id, ')
           ..write('name: $name, ')
+          ..write('imagePath: $imagePath, ')
           ..write('categoryId: $categoryId, ')
           ..write('unitId: $unitId, ')
           ..write('price: $price, ')
@@ -423,6 +459,7 @@ class Product extends DataClass implements Insertable<Product> {
   int get hashCode => Object.hash(
     id,
     name,
+    imagePath,
     categoryId,
     unitId,
     price,
@@ -438,6 +475,7 @@ class Product extends DataClass implements Insertable<Product> {
       (other is Product &&
           other.id == this.id &&
           other.name == this.name &&
+          other.imagePath == this.imagePath &&
           other.categoryId == this.categoryId &&
           other.unitId == this.unitId &&
           other.price == this.price &&
@@ -451,6 +489,7 @@ class Product extends DataClass implements Insertable<Product> {
 class ProductsCompanion extends UpdateCompanion<Product> {
   final Value<String> id;
   final Value<String> name;
+  final Value<String?> imagePath;
   final Value<String> categoryId;
   final Value<String> unitId;
   final Value<int> price;
@@ -463,6 +502,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
   const ProductsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
+    this.imagePath = const Value.absent(),
     this.categoryId = const Value.absent(),
     this.unitId = const Value.absent(),
     this.price = const Value.absent(),
@@ -476,6 +516,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
   ProductsCompanion.insert({
     required String id,
     required String name,
+    this.imagePath = const Value.absent(),
     required String categoryId,
     required String unitId,
     required int price,
@@ -498,6 +539,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
   static Insertable<Product> custom({
     Expression<String>? id,
     Expression<String>? name,
+    Expression<String>? imagePath,
     Expression<String>? categoryId,
     Expression<String>? unitId,
     Expression<int>? price,
@@ -511,6 +553,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
+      if (imagePath != null) 'image_path': imagePath,
       if (categoryId != null) 'category_id': categoryId,
       if (unitId != null) 'unit_id': unitId,
       if (price != null) 'price': price,
@@ -526,6 +569,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
   ProductsCompanion copyWith({
     Value<String>? id,
     Value<String>? name,
+    Value<String?>? imagePath,
     Value<String>? categoryId,
     Value<String>? unitId,
     Value<int>? price,
@@ -539,6 +583,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     return ProductsCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
+      imagePath: imagePath ?? this.imagePath,
       categoryId: categoryId ?? this.categoryId,
       unitId: unitId ?? this.unitId,
       price: price ?? this.price,
@@ -559,6 +604,9 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     }
     if (name.present) {
       map['name'] = Variable<String>(name.value);
+    }
+    if (imagePath.present) {
+      map['image_path'] = Variable<String>(imagePath.value);
     }
     if (categoryId.present) {
       map['category_id'] = Variable<String>(categoryId.value);
@@ -595,6 +643,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     return (StringBuffer('ProductsCompanion(')
           ..write('id: $id, ')
           ..write('name: $name, ')
+          ..write('imagePath: $imagePath, ')
           ..write('categoryId: $categoryId, ')
           ..write('unitId: $unitId, ')
           ..write('price: $price, ')
@@ -3542,6 +3591,7 @@ typedef $$ProductsTableCreateCompanionBuilder =
     ProductsCompanion Function({
       required String id,
       required String name,
+      Value<String?> imagePath,
       required String categoryId,
       required String unitId,
       required int price,
@@ -3556,6 +3606,7 @@ typedef $$ProductsTableUpdateCompanionBuilder =
     ProductsCompanion Function({
       Value<String> id,
       Value<String> name,
+      Value<String?> imagePath,
       Value<String> categoryId,
       Value<String> unitId,
       Value<int> price,
@@ -3583,6 +3634,11 @@ class $$ProductsTableFilterComposer
 
   ColumnFilters<String> get name => $composableBuilder(
     column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get imagePath => $composableBuilder(
+    column: $table.imagePath,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3646,6 +3702,11 @@ class $$ProductsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get imagePath => $composableBuilder(
+    column: $table.imagePath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get categoryId => $composableBuilder(
     column: $table.categoryId,
     builder: (column) => ColumnOrderings(column),
@@ -3701,6 +3762,9 @@ class $$ProductsTableAnnotationComposer
 
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get imagePath =>
+      $composableBuilder(column: $table.imagePath, builder: (column) => column);
 
   GeneratedColumn<String> get categoryId => $composableBuilder(
     column: $table.categoryId,
@@ -3759,6 +3823,7 @@ class $$ProductsTableTableManager
               ({
                 Value<String> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
+                Value<String?> imagePath = const Value.absent(),
                 Value<String> categoryId = const Value.absent(),
                 Value<String> unitId = const Value.absent(),
                 Value<int> price = const Value.absent(),
@@ -3771,6 +3836,7 @@ class $$ProductsTableTableManager
               }) => ProductsCompanion(
                 id: id,
                 name: name,
+                imagePath: imagePath,
                 categoryId: categoryId,
                 unitId: unitId,
                 price: price,
@@ -3785,6 +3851,7 @@ class $$ProductsTableTableManager
               ({
                 required String id,
                 required String name,
+                Value<String?> imagePath = const Value.absent(),
                 required String categoryId,
                 required String unitId,
                 required int price,
@@ -3797,6 +3864,7 @@ class $$ProductsTableTableManager
               }) => ProductsCompanion.insert(
                 id: id,
                 name: name,
+                imagePath: imagePath,
                 categoryId: categoryId,
                 unitId: unitId,
                 price: price,

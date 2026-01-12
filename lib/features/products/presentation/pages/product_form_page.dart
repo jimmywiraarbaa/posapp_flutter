@@ -1,5 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 import '../../../categories/domain/entities/category.dart';
 import '../../../categories/presentation/providers/category_providers.dart';
@@ -8,6 +13,7 @@ import '../../../units/domain/entities/unit.dart';
 import '../../../units/presentation/providers/unit_providers.dart';
 import '../../domain/entities/product.dart';
 import '../providers/product_providers.dart';
+import '../../../../shared/widgets/product_image.dart';
 
 class ProductFormPage extends ConsumerStatefulWidget {
   const ProductFormPage({super.key, this.initialProduct});
@@ -28,6 +34,7 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
 
   String? _categoryId;
   String? _unitId;
+  String? _imagePath;
 
   @override
   void initState() {
@@ -45,6 +52,7 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
     );
     _categoryId = product?.categoryId;
     _unitId = product?.unitId;
+    _imagePath = product?.imagePath;
   }
 
   @override
@@ -76,6 +84,7 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
     final product = Product(
       id: existing?.id ?? generateId(),
       name: name,
+      imagePath: _imagePath,
       categoryId: _categoryId!,
       unitId: _unitId!,
       price: int.parse(_priceController.text.trim()),
@@ -143,6 +152,55 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
     return null;
   }
 
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+    if (picked == null) {
+      return;
+    }
+
+    final docs = await getApplicationDocumentsDirectory();
+    final dir = Directory(p.join(docs.path, 'product_images'));
+    if (!await dir.exists()) {
+      await dir.create(recursive: true);
+    }
+
+    final extension = p.extension(picked.path);
+    final fileName = '${generateId()}${extension.isEmpty ? '.jpg' : extension}';
+    final target = File(p.join(dir.path, fileName));
+    final copied = await File(picked.path).copy(target.path);
+
+    await _deleteLocalImage(_imagePath);
+    if (!mounted) {
+      return;
+    }
+    setState(() => _imagePath = copied.path);
+  }
+
+  Future<void> _removeImage() async {
+    await _deleteLocalImage(_imagePath);
+    if (!mounted) {
+      return;
+    }
+    setState(() => _imagePath = null);
+  }
+
+  Future<void> _deleteLocalImage(String? path) async {
+    if (path == null || path.isEmpty) {
+      return;
+    }
+    if (!path.contains('${p.separator}product_images${p.separator}')) {
+      return;
+    }
+    final file = File(path);
+    if (await file.exists()) {
+      await file.delete();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final categoriesAsync = ref.watch(categoriesStreamProvider(true));
@@ -163,6 +221,25 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
               controller: _nameController,
               decoration: const InputDecoration(labelText: 'Nama Produk'),
               validator: _validateRequired,
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: _pickImage,
+              icon: const Icon(Icons.photo_library_outlined),
+              label: Text(_imagePath == null ? 'Pilih Gambar' : 'Ganti Gambar'),
+            ),
+            if (_imagePath != null) ...[
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: _removeImage,
+                icon: const Icon(Icons.delete_outline),
+                label: const Text('Hapus Gambar'),
+              ),
+            ],
+            const SizedBox(height: 12),
+            ProductImage(
+              imagePath: _imagePath,
+              aspectRatio: 16 / 9,
             ),
             const SizedBox(height: 12),
             TextFormField(

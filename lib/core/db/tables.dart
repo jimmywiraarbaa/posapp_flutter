@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 class Products extends Table {
   TextColumn get id => text().named('id')();
   TextColumn get name => text().named('name')();
+  TextColumn get imagePath => text().named('image_path').nullable()();
   TextColumn get categoryId => text().named('category_id')();
   TextColumn get unitId => text().named('unit_id')();
   IntColumn get price => integer().named('price')();

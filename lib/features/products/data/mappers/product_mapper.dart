@@ -7,6 +7,7 @@ Product productFromDb(db.Product data) {
   return Product(
     id: data.id,
     name: data.name,
+    imagePath: data.imagePath,
     categoryId: data.categoryId,
     unitId: data.unitId,
     price: data.price,
@@ -22,6 +23,7 @@ db.ProductsCompanion productToCompanion(Product product) {
   return db.ProductsCompanion(
     id: Value(product.id),
     name: Value(product.name),
+    imagePath: Value(product.imagePath),
     categoryId: Value(product.categoryId),
     unitId: Value(product.unitId),
     price: Value(product.price),
