@@ -2,6 +2,7 @@ class Category {
   const Category({
     required this.id,
     required this.name,
+    required this.sortOrder,
     required this.isActive,
     required this.createdAt,
     required this.updatedAt,
@@ -9,6 +10,7 @@ class Category {
 
   final String id;
   final String name;
+  final int sortOrder;
   final bool isActive;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -16,6 +18,7 @@ class Category {
   Category copyWith({
     String? id,
     String? name,
+    int? sortOrder,
     bool? isActive,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -23,6 +26,7 @@ class Category {
     return Category(
       id: id ?? this.id,
       name: name ?? this.name,
+      sortOrder: sortOrder ?? this.sortOrder,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

@@ -31,11 +31,8 @@ class PosPage extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
           child: categoriesAsync.when(
             data: (categories) {
-              final names = {
-                for (final category in categories) category.id: category.name,
-              };
               final items = productsAsync.value ?? const <Product>[];
-              final sections = _groupProductsByCategory(items, names);
+              final sections = _groupProductsByCategory(items, categories);
               final hasSelected = selectedCategoryId != null &&
                   sections.any((section) => section.id == selectedCategoryId);
               final effectiveSelected = hasSelected ? selectedCategoryId : null;
@@ -58,10 +55,7 @@ class PosPage extends ConsumerWidget {
                 return const Center(child: Text('Belum ada produk aktif.'));
               }
               final categories = categoriesAsync.value ?? const <Category>[];
-              final categoryNames = {
-                for (final category in categories) category.id: category.name,
-              };
-              final sections = _groupProductsByCategory(items, categoryNames);
+              final sections = _groupProductsByCategory(items, categories);
               final hasSelected = selectedCategoryId != null &&
                   sections.any((section) => section.id == selectedCategoryId);
               final effectiveSelected = hasSelected ? selectedCategoryId : null;
@@ -119,44 +113,47 @@ class _CategorySection {
   const _CategorySection({
     required this.id,
     required this.name,
+    required this.sortOrder,
     required this.products,
   });
 
   final String id;
   final String name;
+  final int sortOrder;
   final List<Product> products;
 }
 
 List<_CategorySection> _groupProductsByCategory(
   List<Product> products,
-  Map<String, String> categoryNames,
+  List<Category> categories,
 ) {
+  final categoryMap = {
+    for (final category in categories) category.id: category,
+  };
   final grouped = <String, List<Product>>{};
   for (final product in products) {
-    final hasCategory = categoryNames.containsKey(product.categoryId);
+    final hasCategory = categoryMap.containsKey(product.categoryId);
     final key = hasCategory ? product.categoryId : _unknownCategoryKey;
     grouped.putIfAbsent(key, () => []).add(product);
   }
 
   final sections = grouped.entries.map((entry) {
-    final name = entry.key == _unknownCategoryKey
-        ? 'Tanpa kategori'
-        : categoryNames[entry.key] ?? 'Tanpa kategori';
+    final category = categoryMap[entry.key];
+    final name = category == null ? 'Tanpa kategori' : category.name;
     final sortedProducts = [...entry.value]
       ..sort((a, b) => a.name.compareTo(b.name));
     return _CategorySection(
       id: entry.key,
       name: name,
+      sortOrder: category?.sortOrder ?? 999999,
       products: sortedProducts,
     );
   }).toList();
 
   sections.sort((a, b) {
-    if (a.name == 'Tanpa kategori') {
-      return 1;
-    }
-    if (b.name == 'Tanpa kategori') {
-      return -1;
+    final orderCompare = a.sortOrder.compareTo(b.sortOrder);
+    if (orderCompare != 0) {
+      return orderCompare;
     }
     return a.name.compareTo(b.name);
   });

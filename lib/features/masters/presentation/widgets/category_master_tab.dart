@@ -59,6 +59,7 @@ class _CategoryTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final subtitleItems = <String>[
+      'Urutan ${category.sortOrder}',
       if (!category.isActive) 'Nonaktif',
       if (isInUse) 'Dipakai produk aktif',
     ];

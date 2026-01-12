@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../core/utils/id_generator.dart';
 import '../../domain/entities/category.dart';
@@ -18,17 +19,25 @@ class _CategoryFormPageState extends ConsumerState<CategoryFormPage> {
   final _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _nameController;
+  late final TextEditingController _orderController;
 
   @override
   void initState() {
     super.initState();
     final category = widget.initialCategory;
     _nameController = TextEditingController(text: category?.name ?? '');
+    _orderController = TextEditingController(
+      text: category?.sortOrder.toString() ?? '',
+    );
+    if (category == null) {
+      Future.microtask(_prefillOrder);
+    }
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _orderController.dispose();
     super.dispose();
   }
 
@@ -37,8 +46,13 @@ class _CategoryFormPageState extends ConsumerState<CategoryFormPage> {
       return;
     }
     final name = _nameController.text.trim();
+    final orderValue = int.tryParse(_orderController.text.trim()) ?? 0;
     if (await _isNameDuplicate(name)) {
       _showMessage('Nama kategori sudah digunakan.');
+      return;
+    }
+    if (await _isOrderDuplicate(orderValue)) {
+      _showMessage('Urutan kategori sudah digunakan.');
       return;
     }
 
@@ -47,6 +61,7 @@ class _CategoryFormPageState extends ConsumerState<CategoryFormPage> {
     final category = Category(
       id: existing?.id ?? generateId(),
       name: name,
+      sortOrder: orderValue,
       isActive: existing?.isActive ?? true,
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
@@ -75,11 +90,45 @@ class _CategoryFormPageState extends ConsumerState<CategoryFormPage> {
     );
   }
 
+  Future<bool> _isOrderDuplicate(int orderValue) async {
+    final repo = ref.read(categoryRepositoryProvider);
+    final items = await repo.fetchAll(includeInactive: true);
+    return items.any(
+      (item) =>
+          item.id != widget.initialCategory?.id &&
+          item.sortOrder == orderValue,
+    );
+  }
+
   String? _validateRequired(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'Wajib diisi.';
     }
     return null;
+  }
+
+  String? _validateOrder(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Wajib diisi.';
+    }
+    final parsed = int.tryParse(value.trim());
+    if (parsed == null || parsed <= 0) {
+      return 'Urutan harus angka lebih dari 0.';
+    }
+    return null;
+  }
+
+  Future<void> _prefillOrder() async {
+    final repo = ref.read(categoryRepositoryProvider);
+    final items = await repo.fetchAll(includeInactive: true);
+    if (!mounted || _orderController.text.trim().isNotEmpty) {
+      return;
+    }
+    final maxOrder = items.fold<int>(
+      0,
+      (value, item) => item.sortOrder > value ? item.sortOrder : value,
+    );
+    _orderController.text = (maxOrder + 1).toString();
   }
 
   @override
@@ -99,6 +148,14 @@ class _CategoryFormPageState extends ConsumerState<CategoryFormPage> {
               controller: _nameController,
               decoration: const InputDecoration(labelText: 'Nama Kategori'),
               validator: _validateRequired,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _orderController,
+              decoration: const InputDecoration(labelText: 'Urutan Kategori'),
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              validator: _validateOrder,
             ),
             const SizedBox(height: 24),
             FilledButton(

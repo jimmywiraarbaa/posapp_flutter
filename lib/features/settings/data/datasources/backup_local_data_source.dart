@@ -9,7 +9,7 @@ import '../../../../core/db/app_database.dart' as db;
 import '../../domain/entities/backup_file.dart';
 
 const _backupDirName = 'backups';
-const _backupVersion = 1;
+const _backupVersion = 2;
 
 class BackupLocalDataSource {
   BackupLocalDataSource(this._db);
@@ -40,8 +40,11 @@ class BackupLocalDataSource {
       throw StateError('Format backup tidak valid.');
     }
 
-    final version = decoded['version'];
-    if (version != _backupVersion) {
+    final rawVersion = decoded['version'];
+    final version = rawVersion is int
+        ? rawVersion
+        : int.tryParse(rawVersion?.toString() ?? '');
+    if (version == null || (version != 1 && version != _backupVersion)) {
       throw StateError('Versi backup tidak didukung.');
     }
 
@@ -53,9 +56,10 @@ class BackupLocalDataSource {
     final products = _parseList(tables['products'])
         .map((row) => db.Product.fromJson(row))
         .toList();
-    final categories = _parseList(tables['categories'])
-        .map((row) => db.Category.fromJson(row))
-        .toList();
+    final categories = _parseCategories(
+      _parseList(tables['categories']),
+      version,
+    );
     final units =
         _parseList(tables['units']).map((row) => db.Unit.fromJson(row)).toList();
     final transactions = _parseList(tables['transactions'])
@@ -219,5 +223,29 @@ class BackupLocalDataSource {
               (key, val) => MapEntry(key.toString(), val),
             ))
         .toList();
+  }
+
+  List<db.Category> _parseCategories(
+    List<Map<String, dynamic>> rows,
+    int version,
+  ) {
+    if (version >= 2) {
+      return rows.map((row) => db.Category.fromJson(row)).toList();
+    }
+
+    final normalized = rows
+        .map((row) => Map<String, dynamic>.from(row))
+        .toList();
+    normalized.sort((a, b) {
+      final left = (a['createdAt'] ?? '').toString();
+      final right = (b['createdAt'] ?? '').toString();
+      return left.compareTo(right);
+    });
+    var order = 1;
+    for (final row in normalized) {
+      row.putIfAbsent('sortOrder', () => order);
+      order++;
+    }
+    return normalized.map((row) => db.Category.fromJson(row)).toList();
   }
 }

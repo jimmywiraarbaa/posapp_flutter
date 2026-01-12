@@ -7,6 +7,7 @@ Category categoryFromDb(db.Category data) {
   return Category(
     id: data.id,
     name: data.name,
+    sortOrder: data.sortOrder,
     isActive: data.isActive,
     createdAt: DateTime.parse(data.createdAt),
     updatedAt: DateTime.parse(data.updatedAt),
@@ -17,6 +18,7 @@ db.CategoriesCompanion categoryToCompanion(Category category) {
   return db.CategoriesCompanion(
     id: Value(category.id),
     name: Value(category.name),
+    sortOrder: Value(category.sortOrder),
     isActive: Value(category.isActive),
     createdAt: Value(category.createdAt.toIso8601String()),
     updatedAt: Value(category.updatedAt.toIso8601String()),

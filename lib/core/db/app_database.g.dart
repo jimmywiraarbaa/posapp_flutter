@@ -682,6 +682,18 @@ class $CategoriesTable extends Categories
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _isActiveMeta = const VerificationMeta(
     'isActive',
   );
@@ -722,6 +734,7 @@ class $CategoriesTable extends Categories
   List<GeneratedColumn> get $columns => [
     id,
     name,
+    sortOrder,
     isActive,
     createdAt,
     updatedAt,
@@ -750,6 +763,12 @@ class $CategoriesTable extends Categories
       );
     } else if (isInserting) {
       context.missing(_nameMeta);
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
     }
     if (data.containsKey('is_active')) {
       context.handle(
@@ -792,6 +811,10 @@ class $CategoriesTable extends Categories
         DriftSqlType.string,
         data['${effectivePrefix}name'],
       )!,
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
       isActive: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_active'],
@@ -816,12 +839,14 @@ class $CategoriesTable extends Categories
 class Category extends DataClass implements Insertable<Category> {
   final String id;
   final String name;
+  final int sortOrder;
   final bool isActive;
   final String createdAt;
   final String updatedAt;
   const Category({
     required this.id,
     required this.name,
+    required this.sortOrder,
     required this.isActive,
     required this.createdAt,
     required this.updatedAt,
@@ -831,6 +856,7 @@ class Category extends DataClass implements Insertable<Category> {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
     map['name'] = Variable<String>(name);
+    map['sort_order'] = Variable<int>(sortOrder);
     map['is_active'] = Variable<bool>(isActive);
     map['created_at'] = Variable<String>(createdAt);
     map['updated_at'] = Variable<String>(updatedAt);
@@ -841,6 +867,7 @@ class Category extends DataClass implements Insertable<Category> {
     return CategoriesCompanion(
       id: Value(id),
       name: Value(name),
+      sortOrder: Value(sortOrder),
       isActive: Value(isActive),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -855,6 +882,7 @@ class Category extends DataClass implements Insertable<Category> {
     return Category(
       id: serializer.fromJson<String>(json['id']),
       name: serializer.fromJson<String>(json['name']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
       isActive: serializer.fromJson<bool>(json['isActive']),
       createdAt: serializer.fromJson<String>(json['createdAt']),
       updatedAt: serializer.fromJson<String>(json['updatedAt']),
@@ -866,6 +894,7 @@ class Category extends DataClass implements Insertable<Category> {
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'name': serializer.toJson<String>(name),
+      'sortOrder': serializer.toJson<int>(sortOrder),
       'isActive': serializer.toJson<bool>(isActive),
       'createdAt': serializer.toJson<String>(createdAt),
       'updatedAt': serializer.toJson<String>(updatedAt),
@@ -875,12 +904,14 @@ class Category extends DataClass implements Insertable<Category> {
   Category copyWith({
     String? id,
     String? name,
+    int? sortOrder,
     bool? isActive,
     String? createdAt,
     String? updatedAt,
   }) => Category(
     id: id ?? this.id,
     name: name ?? this.name,
+    sortOrder: sortOrder ?? this.sortOrder,
     isActive: isActive ?? this.isActive,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -889,6 +920,7 @@ class Category extends DataClass implements Insertable<Category> {
     return Category(
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -900,6 +932,7 @@ class Category extends DataClass implements Insertable<Category> {
     return (StringBuffer('Category(')
           ..write('id: $id, ')
           ..write('name: $name, ')
+          ..write('sortOrder: $sortOrder, ')
           ..write('isActive: $isActive, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -908,13 +941,15 @@ class Category extends DataClass implements Insertable<Category> {
   }
 
   @override
-  int get hashCode => Object.hash(id, name, isActive, createdAt, updatedAt);
+  int get hashCode =>
+      Object.hash(id, name, sortOrder, isActive, createdAt, updatedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Category &&
           other.id == this.id &&
           other.name == this.name &&
+          other.sortOrder == this.sortOrder &&
           other.isActive == this.isActive &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
@@ -923,6 +958,7 @@ class Category extends DataClass implements Insertable<Category> {
 class CategoriesCompanion extends UpdateCompanion<Category> {
   final Value<String> id;
   final Value<String> name;
+  final Value<int> sortOrder;
   final Value<bool> isActive;
   final Value<String> createdAt;
   final Value<String> updatedAt;
@@ -930,6 +966,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
   const CategoriesCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
+    this.sortOrder = const Value.absent(),
     this.isActive = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -938,6 +975,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
   CategoriesCompanion.insert({
     required String id,
     required String name,
+    this.sortOrder = const Value.absent(),
     required bool isActive,
     required String createdAt,
     required String updatedAt,
@@ -950,6 +988,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
   static Insertable<Category> custom({
     Expression<String>? id,
     Expression<String>? name,
+    Expression<int>? sortOrder,
     Expression<bool>? isActive,
     Expression<String>? createdAt,
     Expression<String>? updatedAt,
@@ -958,6 +997,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
+      if (sortOrder != null) 'sort_order': sortOrder,
       if (isActive != null) 'is_active': isActive,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -968,6 +1008,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
   CategoriesCompanion copyWith({
     Value<String>? id,
     Value<String>? name,
+    Value<int>? sortOrder,
     Value<bool>? isActive,
     Value<String>? createdAt,
     Value<String>? updatedAt,
@@ -976,6 +1017,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     return CategoriesCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
+      sortOrder: sortOrder ?? this.sortOrder,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -991,6 +1033,9 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     }
     if (name.present) {
       map['name'] = Variable<String>(name.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
     }
     if (isActive.present) {
       map['is_active'] = Variable<bool>(isActive.value);
@@ -1012,6 +1057,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     return (StringBuffer('CategoriesCompanion(')
           ..write('id: $id, ')
           ..write('name: $name, ')
+          ..write('sortOrder: $sortOrder, ')
           ..write('isActive: $isActive, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -3901,6 +3947,7 @@ typedef $$CategoriesTableCreateCompanionBuilder =
     CategoriesCompanion Function({
       required String id,
       required String name,
+      Value<int> sortOrder,
       required bool isActive,
       required String createdAt,
       required String updatedAt,
@@ -3910,6 +3957,7 @@ typedef $$CategoriesTableUpdateCompanionBuilder =
     CategoriesCompanion Function({
       Value<String> id,
       Value<String> name,
+      Value<int> sortOrder,
       Value<bool> isActive,
       Value<String> createdAt,
       Value<String> updatedAt,
@@ -3932,6 +3980,11 @@ class $$CategoriesTableFilterComposer
 
   ColumnFilters<String> get name => $composableBuilder(
     column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3970,6 +4023,11 @@ class $$CategoriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isActive => $composableBuilder(
     column: $table.isActive,
     builder: (column) => ColumnOrderings(column),
@@ -4000,6 +4058,9 @@ class $$CategoriesTableAnnotationComposer
 
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
 
   GeneratedColumn<bool> get isActive =>
       $composableBuilder(column: $table.isActive, builder: (column) => column);
@@ -4041,6 +4102,7 @@ class $$CategoriesTableTableManager
               ({
                 Value<String> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<String> createdAt = const Value.absent(),
                 Value<String> updatedAt = const Value.absent(),
@@ -4048,6 +4110,7 @@ class $$CategoriesTableTableManager
               }) => CategoriesCompanion(
                 id: id,
                 name: name,
+                sortOrder: sortOrder,
                 isActive: isActive,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -4057,6 +4120,7 @@ class $$CategoriesTableTableManager
               ({
                 required String id,
                 required String name,
+                Value<int> sortOrder = const Value.absent(),
                 required bool isActive,
                 required String createdAt,
                 required String updatedAt,
@@ -4064,6 +4128,7 @@ class $$CategoriesTableTableManager
               }) => CategoriesCompanion.insert(
                 id: id,
                 name: name,
+                sortOrder: sortOrder,
                 isActive: isActive,
                 createdAt: createdAt,
                 updatedAt: updatedAt,

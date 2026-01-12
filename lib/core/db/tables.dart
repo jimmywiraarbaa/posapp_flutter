@@ -23,12 +23,17 @@ class Products extends Table {
 class Categories extends Table {
   TextColumn get id => text().named('id')();
   TextColumn get name => text().named('name')();
+  IntColumn get sortOrder =>
+      integer().named('sort_order').withDefault(const Constant(0))();
   BoolColumn get isActive => boolean().named('is_active')();
   TextColumn get createdAt => text().named('created_at')();
   TextColumn get updatedAt => text().named('updated_at')();
 
   @override
   Set<Column> get primaryKey => {id};
+
+  @override
+  List<String> get customConstraints => ['UNIQUE(sort_order)'];
 
   @override
   String get tableName => 'categories';

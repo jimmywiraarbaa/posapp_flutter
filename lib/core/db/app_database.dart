@@ -25,13 +25,33 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onUpgrade: (m, from, to) async {
           if (from < 2) {
             await m.addColumn(products, products.imagePath);
+          }
+          if (from < 3) {
+            await m.addColumn(categories, categories.sortOrder);
+
+            final existing = await (select(categories)
+                  ..orderBy([
+                    (tbl) => OrderingTerm(expression: tbl.createdAt),
+                  ]))
+                .get();
+            var order = 1;
+            for (final row in existing) {
+              await (update(categories)..where((tbl) => tbl.id.equals(row.id)))
+                  .write(CategoriesCompanion(sortOrder: Value(order)));
+              order++;
+            }
+
+            await customStatement(
+              'CREATE UNIQUE INDEX IF NOT EXISTS categories_sort_order_unique '
+              'ON categories(sort_order)',
+            );
           }
         },
       );

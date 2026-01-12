@@ -14,6 +14,10 @@ class CategoryLocalDataSource {
     if (!includeInactive) {
       query.where((tbl) => tbl.isActive.equals(true));
     }
+    query.orderBy([
+      (tbl) => OrderingTerm(expression: tbl.sortOrder),
+      (tbl) => OrderingTerm(expression: tbl.name),
+    ]);
     return query.watch().map((rows) => rows.map(categoryFromDb).toList());
   }
 
@@ -22,6 +26,10 @@ class CategoryLocalDataSource {
     if (!includeInactive) {
       query.where((tbl) => tbl.isActive.equals(true));
     }
+    query.orderBy([
+      (tbl) => OrderingTerm(expression: tbl.sortOrder),
+      (tbl) => OrderingTerm(expression: tbl.name),
+    ]);
     final rows = await query.get();
     return rows.map(categoryFromDb).toList();
   }
