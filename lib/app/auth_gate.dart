@@ -15,6 +15,8 @@ class AuthGate extends ConsumerStatefulWidget {
 
 class _AuthGateState extends ConsumerState<AuthGate>
     with WidgetsBindingObserver {
+  DateTime? _backgroundedAt;
+
   @override
   void initState() {
     super.initState();
@@ -29,9 +31,24 @@ class _AuthGateState extends ConsumerState<AuthGate>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    final authState = ref.read(authControllerProvider);
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused) {
-      ref.read(authControllerProvider.notifier).lock();
+      if (authState.stage == AuthStage.unlocked &&
+          authState.autoLockMinutes > 0) {
+        _backgroundedAt ??= DateTime.now();
+      }
+      return;
+    }
+    if (state == AppLifecycleState.resumed) {
+      final notifier = ref.read(authControllerProvider.notifier);
+      if (_backgroundedAt != null) {
+        final elapsed = DateTime.now().difference(_backgroundedAt!);
+        notifier.resumeFromBackground(elapsed);
+      } else {
+        notifier.registerActivity();
+      }
+      _backgroundedAt = null;
     }
   }
 

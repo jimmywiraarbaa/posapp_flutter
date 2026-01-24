@@ -69,6 +69,22 @@ class AuthController extends StateNotifier<AuthState> {
     _resetTimer();
   }
 
+  void resumeFromBackground(Duration elapsed) {
+    if (state.stage != AuthStage.unlocked) {
+      return;
+    }
+    final minutes = state.autoLockMinutes;
+    if (minutes <= 0) {
+      return;
+    }
+    final total = Duration(minutes: minutes);
+    if (elapsed >= total) {
+      lock();
+      return;
+    }
+    _resetTimer(override: total - elapsed);
+  }
+
   Future<void> updateAutoLockMinutes(int minutes) async {
     await _settingsRepository.setAutoLockMinutes(minutes);
     state = state.copyWith(autoLockMinutes: minutes);
@@ -82,13 +98,18 @@ class AuthController extends StateNotifier<AuthState> {
     _resetTimer();
   }
 
-  void _resetTimer() {
+  void _resetTimer({Duration? override}) {
     _timer?.cancel();
     final minutes = state.autoLockMinutes;
     if (minutes <= 0) {
       return;
     }
-    _timer = Timer(Duration(minutes: minutes), lock);
+    final duration = override ?? Duration(minutes: minutes);
+    if (duration <= Duration.zero) {
+      lock();
+      return;
+    }
+    _timer = Timer(duration, lock);
   }
 
   @override
