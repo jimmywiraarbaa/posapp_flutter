@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../features/reports/presentation/pages/reports_page.dart';
+import '../features/expenses/presentation/pages/expenses_page.dart';
 import '../features/stock/presentation/pages/stock_page.dart';
 import '../features/transactions/presentation/pages/pos_page.dart';
 import 'more_page.dart';
@@ -18,6 +19,7 @@ class _AppShellState extends State<AppShell> {
   static const _pages = <Widget>[
     PosPage(),
     StockPage(),
+    ExpensesPage(),
     ReportsPage(),
     MorePage(),
   ];
@@ -25,6 +27,7 @@ class _AppShellState extends State<AppShell> {
   static const _navItems = <_NavItem>[
     _NavItem(icon: Icons.point_of_sale, label: 'Transaksi'),
     _NavItem(icon: Icons.inventory_2, label: 'Stok'),
+    _NavItem(icon: Icons.payments, label: 'Pengeluaran'),
     _NavItem(icon: Icons.bar_chart, label: 'Laporan'),
     _NavItem(icon: Icons.more_horiz, label: 'More'),
   ];
