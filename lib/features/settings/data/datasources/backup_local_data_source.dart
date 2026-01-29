@@ -9,7 +9,7 @@ import '../../../../core/db/app_database.dart' as db;
 import '../../domain/entities/backup_file.dart';
 
 const _backupDirName = 'backups';
-const _backupVersion = 2;
+const _backupVersion = 3;
 
 class BackupLocalDataSource {
   BackupLocalDataSource(this._db);
@@ -44,7 +44,8 @@ class BackupLocalDataSource {
     final version = rawVersion is int
         ? rawVersion
         : int.tryParse(rawVersion?.toString() ?? '');
-    if (version == null || (version != 1 && version != _backupVersion)) {
+    if (version == null ||
+        (version != 1 && version != 2 && version != _backupVersion)) {
       throw StateError('Versi backup tidak didukung.');
     }
 
@@ -71,6 +72,11 @@ class BackupLocalDataSource {
     final stockMovements = _parseList(tables['stock_movements'])
         .map((row) => db.StockMovement.fromJson(row))
         .toList();
+    final expenses = version >= 3
+        ? _parseList(tables['expenses'])
+            .map((row) => db.Expense.fromJson(row))
+            .toList()
+        : <db.Expense>[];
     final settings = _parseList(tables['settings'])
         .map((row) => db.Setting.fromJson(row))
         .toList();
@@ -81,6 +87,7 @@ class BackupLocalDataSource {
       await _db.delete(_db.transactionItems).go();
       await _db.delete(_db.stockMovements).go();
       await _db.delete(_db.transactions).go();
+      await _db.delete(_db.expenses).go();
       await _db.delete(_db.products).go();
       await _db.delete(_db.units).go();
       await _db.delete(_db.categories).go();
@@ -122,6 +129,12 @@ class BackupLocalDataSource {
           batch.insertAll(
             _db.stockMovements,
             stockMovements.map((item) => item.toCompanion(true)).toList(),
+          );
+        }
+        if (expenses.isNotEmpty) {
+          batch.insertAll(
+            _db.expenses,
+            expenses.map((item) => item.toCompanion(true)).toList(),
           );
         }
         if (settings.isNotEmpty) {
@@ -173,6 +186,7 @@ class BackupLocalDataSource {
     final transactions = await _db.select(_db.transactions).get();
     final transactionItems = await _db.select(_db.transactionItems).get();
     final stockMovements = await _db.select(_db.stockMovements).get();
+    final expenses = await _db.select(_db.expenses).get();
     final settings = await _db.select(_db.settings).get();
     final pins = await _db.select(_db.pins).get();
 
@@ -188,6 +202,7 @@ class BackupLocalDataSource {
             transactionItems.map((item) => item.toJson()).toList(),
         'stock_movements':
             stockMovements.map((item) => item.toJson()).toList(),
+        'expenses': expenses.map((item) => item.toJson()).toList(),
         'settings': settings.map((item) => item.toJson()).toList(),
         'pins': pins.map((item) => item.toJson()).toList(),
       },

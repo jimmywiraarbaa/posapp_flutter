@@ -104,6 +104,21 @@ class StockMovements extends Table {
   String get tableName => 'stock_movements';
 }
 
+class Expenses extends Table {
+  TextColumn get id => text().named('id')();
+  TextColumn get title => text().named('title')();
+  IntColumn get amount => integer().named('amount')();
+  TextColumn get note => text().named('note').nullable()();
+  TextColumn get createdAt => text().named('created_at')();
+  TextColumn get updatedAt => text().named('updated_at')();
+
+  @override
+  Set<Column> get primaryKey => {id};
+
+  @override
+  String get tableName => 'expenses';
+}
+
 class Settings extends Table {
   TextColumn get key => text().named('key')();
   TextColumn get value => text().named('value')();

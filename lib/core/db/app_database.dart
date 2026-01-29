@@ -17,6 +17,7 @@ part 'app_database.g.dart';
     Transactions,
     TransactionItems,
     StockMovements,
+    Expenses,
     Settings,
     Pins,
   ],
@@ -25,7 +26,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -52,6 +53,9 @@ class AppDatabase extends _$AppDatabase {
               'CREATE UNIQUE INDEX IF NOT EXISTS categories_sort_order_unique '
               'ON categories(sort_order)',
             );
+          }
+          if (from < 4) {
+            await m.createTable(expenses);
           }
         },
       );
