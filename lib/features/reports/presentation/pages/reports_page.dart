@@ -3,9 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../reports/domain/entities/top_product.dart';
 import '../../../reports/presentation/providers/report_providers.dart';
+import '../../../expenses/domain/entities/expense.dart';
+import '../../../expenses/presentation/providers/expense_providers.dart';
 import '../../../transactions/domain/entities/transaction_record.dart';
 import '../../../transactions/presentation/providers/transaction_providers.dart';
 import '../../../transactions/presentation/pages/transaction_detail_page.dart';
+
+const _transactionPastel = Color(0xFFE8F5E9);
+const _expensePastel = Color(0xFFFFEBEE);
 
 class ReportsPage extends ConsumerWidget {
   const ReportsPage({super.key});
@@ -13,6 +18,7 @@ class ReportsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final transactionsAsync = ref.watch(transactionsStreamProvider(false));
+    final expensesAsync = ref.watch(expensesStreamProvider);
     final dateRange = ref.watch(reportDateRangeProvider);
     final topProductsAsync = ref.watch(topProductsProvider(dateRange));
 
@@ -50,6 +56,32 @@ class ReportsPage extends ConsumerWidget {
               const Center(child: Text('Belum ada transaksi pada periode ini.'))
             else
               ...filtered.map((record) => _TransactionTile(record: record)),
+            const SizedBox(height: 16),
+            Text(
+              'Pengeluaran',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            expensesAsync.when(
+              data: (items) {
+                final filteredExpenses = items
+                    .where((item) => _isWithinRange(item.createdAt, dateRange))
+                    .toList();
+                if (filteredExpenses.isEmpty) {
+                  return const Center(
+                    child: Text('Belum ada pengeluaran pada periode ini.'),
+                  );
+                }
+                return Column(
+                  children: filteredExpenses
+                      .map((expense) => _ExpenseTile(expense: expense))
+                      .toList(),
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (_, __) =>
+                  const Center(child: Text('Gagal memuat pengeluaran.')),
+            ),
           ],
         );
       },
@@ -101,17 +133,48 @@ class _TransactionTile extends StatelessWidget {
     final timeLabel = _formatDateTime(record.createdAt);
     final subtitle = '${record.paymentMethod} • $timeLabel';
 
-    return ListTile(
-      title: Text(record.trxNumber),
-      subtitle: Text(subtitle),
-      trailing: Text('Rp ${record.total}'),
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => TransactionDetailPage(record: record),
-          ),
-        );
-      },
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: ListTile(
+        tileColor: _transactionPastel,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: Text(record.trxNumber),
+        subtitle: Text(subtitle),
+        trailing: Text('Rp ${record.total}'),
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => TransactionDetailPage(record: record),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ExpenseTile extends StatelessWidget {
+  const _ExpenseTile({required this.expense});
+
+  final Expense expense;
+
+  @override
+  Widget build(BuildContext context) {
+    final subtitleParts = <String>[
+      _formatDateTime(expense.createdAt),
+      if (expense.note != null && expense.note!.trim().isNotEmpty)
+        expense.note!.trim(),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: ListTile(
+        tileColor: _expensePastel,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: Text(expense.title),
+        subtitle: Text(subtitleParts.join(' • ')),
+        trailing: Text('Rp ${expense.amount}'),
+      ),
     );
   }
 }
